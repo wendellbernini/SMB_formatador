@@ -2,6 +2,8 @@ streamlit
 pandas
 requests
 xlwt
-docling-core
 gspread
 gspread-dataframe
+openpyxl
+xlsxwriter
+docling-core
