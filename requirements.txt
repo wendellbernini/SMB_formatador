@@ -7,3 +7,4 @@ gspread-dataframe
 openpyxl
 xlsxwriter
 docling-core
+docling
