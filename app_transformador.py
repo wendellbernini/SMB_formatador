@@ -19,21 +19,49 @@ CAMINHO_CREDENCIAL_LOCAL = os.path.join(".streamlit", "gcp_service_account.json"
 
 # --- FUNÇÕES DE GESTÃO DE DADOS (REESCRITAS PARA MÁXIMA ROBUSTEZ) ---
 
+# --- app_transformador.py ---
+
+# ... (suas outras importações no topo do arquivo) ...
+
+# --- FUNÇÕES DE GESTÃO DE DADOS (REESCRITAS PARA MÁXIMA ROBUSTEZ) ---
+
+# SUBSTITUA A FUNÇÃO INTEIRA ABAIXO
 @st.cache_resource
 def conectar_google_sheets():
+    """
+    Conecta ao Google Sheets de forma inteligente, funcionando tanto localmente
+    (com arquivo) quanto em produção no Render (com Variável de Ambiente).
+    """
     try:
+        # 1. Tenta usar o arquivo local (para desenvolvimento na sua máquina)
         if os.path.exists(CAMINHO_CREDENCIAL_LOCAL):
+            st.info("Usando credencial de arquivo local.")
             sa = gspread.service_account(filename=CAMINHO_CREDENCIAL_LOCAL)
+        # 2. Se o arquivo não existe, tenta usar a Variável de Ambiente (para o Render)
         else:
-            creds_json = st.secrets["gcp_service_account"]
+            st.info("Arquivo local não encontrado. Usando credencial da Variável de Ambiente.")
+            # Pega a string JSON da variável de ambiente que você configurou no Render
+            creds_str = os.environ.get("gcp_service_account_json")
+            
+            # Se a variável não estiver configurada, mostra um erro claro
+            if not creds_str:
+                st.error("ERRO: A Variável de Ambiente 'gcp_service_account_json' não foi encontrada ou está vazia no Render.")
+                return None
+            
+            # Converte a string de volta para um dicionário que o gspread entende
+            creds_json = json.loads(creds_str)
             sa = gspread.service_account_from_dict(creds_json)
         
+        # O resto da função continua como antes
         sh = sa.open(NOME_PLANILHA_GOOGLE)
-        st.success(f"Conectado à planilha '{NOME_PLANILHA_GOOGLE}'!")
+        st.success(f"Conectado com sucesso à planilha '{NOME_PLANILHA_GOOGLE}'!")
         return sh
+        
     except Exception as e:
-        st.error(f"Falha crítica na conexão com o Google Sheets: {e}")
+        # Se qualquer coisa der errado, mostra um erro detalhado
+        st.error(f"FALHA CRÍTICA NA CONEXÃO: {e}")
         return None
+
 
 def carregar_dados_completos(planilha_google, nome_da_aba):
     if planilha_google is None: return None, None
